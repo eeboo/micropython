@@ -780,7 +780,7 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
 
     uint8_t *src = (uint8_t*)src_in;
     UART_HandleTypeDef *huart = self->huart;
-
+    huart_1 = huart;
     // call hal function
     HAL_UART_Transmit_IT(huart, src, num_chars);
     
@@ -788,6 +788,14 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
     *errcode = 0;
     return num_chars;
 }
+
+/** start add irq handler */
+void USART1_IRQHandler(void) __attribute__((weak));
+void USART1_IRQHandler(void)
+{
+    HAL_UART_IRQHandler(huart_1);
+}
+/** end add irq handler */
 
 void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {
     int errcode;

@@ -96,4 +96,6 @@ static inline bool uart_tx_avail(pyb_uart_obj_t *self) {
     #endif
 }
 
+UART_HandleTypeDef *huart_1;
+
 #endif // MICROPY_INCLUDED_STM32_UART_H
