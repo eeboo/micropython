@@ -397,6 +397,8 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
     huart.Init.OverSampling = UART_OVERSAMPLING_16;
     HAL_UART_Init(&huart);
 
+    uart_obj->huart = &huart;
+
     // Disable all individual UART IRQs, but enable the global handler
     uart_obj->uartx->CR1 &= ~USART_CR1_IE_ALL;
     uart_obj->uartx->CR2 &= ~USART_CR2_IE_ALL;
@@ -692,7 +694,7 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 
 // Waits at most timeout milliseconds for UART flag to be set.
 // Returns true if flag is/was set, false on timeout.
-STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
+/*STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
     // Note: we don't use WFI to idle in this loop because UART tx doesn't generate
     // an interrupt and the flag can be set quickly if the baudrate is large.
     uint32_t start = HAL_GetTick();
@@ -710,13 +712,13 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
             return false; // timeout
         }
     }
-}
+}*/
 
 // src - a pointer to the data to send (16-bit aligned for 9-bit chars)
 // num_chars - number of characters to send (9-bit chars count for 2 bytes from src)
 // *errcode - returns 0 for success, MP_Exxx on error
 // returns the number of characters sent (valid even if there was an error)
-size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
+/*size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
     if (num_chars == 0) {
         *errcode = 0;
         return 0;
@@ -768,6 +770,23 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
 
     *errcode = 0;
     return num_tx;
+}*/
+
+size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
+    if (num_chars == 0) {
+        *errcode = 0;
+        return 0;
+    }
+
+    uint8_t *src = (uint8_t*)src_in;
+    UART_HandleTypeDef *huart = self->huart;
+
+    // call hal function
+    HAL_UART_Transmit_IT(huart, src, num_chars);
+    
+
+    *errcode = 0;
+    return num_chars;
 }
 
 void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {
