@@ -93,6 +93,10 @@
 
 extern void NORETURN __fatal_error(const char *msg);
 
+/** start user private var */
+UART_HandleTypeDef *huart_1;
+/** end user private var */
+
 void uart_init0(void) {
     #if defined(STM32H7)
     RCC_PeriphCLKInitTypeDef RCC_PeriphClkInit = {0};
@@ -397,7 +401,12 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
     huart.Init.OverSampling = UART_OVERSAMPLING_16;
     HAL_UART_Init(&huart);
 
-    uart_obj->huart = &huart;
+    if(uart_obj->uart_id == PYB_UART_1)
+    {
+      uart_obj->huart = &huart;
+      huart_1 = &huart;
+    }
+
 
     // Disable all individual UART IRQs, but enable the global handler
     uart_obj->uartx->CR1 &= ~USART_CR1_IE_ALL;
@@ -782,8 +791,17 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
     UART_HandleTypeDef *huart = self->huart;
     huart_1 = huart;
     // call hal function
-    HAL_UART_Transmit_IT(huart, src, num_chars);
-    
+    HAL_StatusTypeDef status = HAL_UART_Transmit_IT(huart, src, num_chars);
+    if(status == HAL_ERROR){
+      *errcode = HAL_ERROR;
+      return 0;
+    }
+
+    if(status != HAL_BUSY){
+      *errcode = HAL_ERROR;
+      return 0;
+    }
+
 
     *errcode = 0;
     return num_chars;
