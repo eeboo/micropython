@@ -409,9 +409,17 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
 
 
     // Disable all individual UART IRQs, but enable the global handler
-    uart_obj->uartx->CR1 &= ~USART_CR1_IE_ALL;
-    uart_obj->uartx->CR2 &= ~USART_CR2_IE_ALL;
-    uart_obj->uartx->CR3 &= ~USART_CR3_IE_ALL;
+    //uart_obj->uartx->CR1 &= ~USART_CR1_IE_ALL;
+    //uart_obj->uartx->CR2 &= ~USART_CR2_IE_ALL;
+    //uart_obj->uartx->CR3 &= ~USART_CR3_IE_ALL;
+
+    /** start enable Interupt */
+    //enable RXNE and TXE interrupts on USART SIDE
+    uart_obj->uartx->CR1 |= USART_CR1_RXNEIE | USART_CR1_TXEIE;
+    //----------|  RX enable        TX enable     UART enable
+    uart_obj->uartx->CR1 |= USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
+    /** end enable Interupt */
+
     NVIC_SetPriority(IRQn_NONNEG(irqn), IRQ_PRI_UART);
     HAL_NVIC_EnableIRQ(irqn);
 
